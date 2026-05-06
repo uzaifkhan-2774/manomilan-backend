@@ -1,4 +1,4 @@
-# 💞 Manomilan Backend
+#  Manomilan Backend
 
 Welcome to the **Manomilan Backend**, a RESTful API server designed for a matchmaking/matrimonial application. This backend manages user registration, profile management, authentication, partner preferences, and more using modern web technologies.
 
