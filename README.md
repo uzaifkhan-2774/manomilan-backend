@@ -50,7 +50,7 @@ manomilan-backend/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/manas-kokate/manomilan-backend.git
+git clone https://github.com/uzaifkhan-2774/manomilan-backend
 cd manomilan-backend
 2. Install Dependencies
 npm install
@@ -95,6 +95,6 @@ Add testing (Jest/Supertest)
 
 
 🙋‍♂️ Author
-Manas Kokate
+uzaif khan
 
-GitHub:https://github.com/manas-kokate
+GitHub:https://github.com/uzaifkhan-2774
