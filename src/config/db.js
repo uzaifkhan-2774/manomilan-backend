@@ -5,7 +5,7 @@ dotenv.config()
 
 const connectDb = async () => {
     try {
-        await mongoose.connect("mongodb://10.0.0.186:27017/manomilanmaindata");
+        await mongoose.connect(process.env.mongoUrl);
         console.log("Db connected successfully...!")
         console.log(mongoose.connection.readyState)
     } catch (error) {
