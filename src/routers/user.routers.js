@@ -1,6 +1,6 @@
 import express from "express"
 import { uploadMiddleware } from "../utils/upload.js";
-import { registerUser, login, getLoggedInUser, editProfile, getFranchises, mutualMatching, sendMessageFromUser, draftMessageFromUser, getSentMessagesForUser, getDraftedMessagesForUser, getRepliesForUser, getFrachiseAndDistributorAndAdmin, getCurrentUser, editExpectaions, getUserPackages, subscribe, subscribed, verifyOtpAndChangeUserPassword, getOtpForUser, inActivateUser, getAvailablePackages, checkUserExists } from "../controllers/user.controller.js";
+import { registerUser, login, getLoggedInUser, editProfile, getFranchises, mutualMatching, sendMessageFromUser, draftMessageFromUser, getSentMessagesForUser, getDraftedMessagesForUser, getRepliesForUser, getFrachiseAndDistributorAndAdmin, getCurrentUser, editExpectaions, getUserPackages, subscribe, subscribed, verifyOtpAndChangeUserPassword, getOtpForUser, inActivateUser, getAvailablePackages, checkUserExists, quickSearch } from "../controllers/user.controller.js";
 import { userAuth } from "../middlewares/auth.js"
 import {
     getCountry, getDegreesByStream, getFoodPref, getReligion,
@@ -111,6 +111,10 @@ router.get('/get-available-packages', getAvailablePackages)
 
 // check user status
 router.post('/user-exists', checkUserExists)
+
+// Quick Search
+
+router.post('/quick-search', quickSearch)
 
 
 export default router

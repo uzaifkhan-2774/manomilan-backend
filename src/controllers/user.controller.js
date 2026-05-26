@@ -445,6 +445,7 @@ export const login = async (req, res) => {
     const findUser = await userModel.findOne({
       $or: [{ loginEmail: identifier }, { loginNumber: identifier }]
     });
+   
     if (!findUser) {
       return res.send({ status: false, message: "Invalid email or phone number" })
     }
@@ -1446,4 +1447,183 @@ export const checkUserExists = async (req, res) => {
   }
 }
 
+// Quick search api
 
+export const quickSearch = async (req, res) => {
+    try {
+        const { gender, caste, income, age, height, Occupation, education } = req.body;
+ 
+       
+        const missing = [];
+        if (!gender)     missing.push("gender");
+        if (!caste)      missing.push("caste");
+        if (!income)     missing.push("income");
+        if (!age)        missing.push("age");
+        if (!height)     missing.push("height");
+        if (!Occupation) missing.push("Occupation");
+ 
+        if (missing.length > 0) {
+            return res.status(400).send({
+                status: false,
+                message: `Missing required fields: ${missing.join(", ")}`,
+            });
+        }
+ 
+        const ageNum    = parseInt(age, 10);
+        const heightNum = parseInt(height, 10);
+        const incomeNum = parseInt(income, 10);
+ 
+        // Minimum age: Bride ≥ 18, Groom ≥ 21
+        const minAge = gender === "Bride" ? 18 : 21;
+        if (isNaN(ageNum) || ageNum < minAge || ageNum > 99) {
+            return res.status(400).send({
+                status: false,
+                message: `Age must be between ${minAge} and 99 for a ${gender}.`,
+            });
+        }
+ 
+        if (isNaN(heightNum) || isNaN(incomeNum)) {
+            return res.status(400).send({
+                status: false,
+                message: "height and income must be valid numbers.",
+            });
+        }
+ 
+        //  Map frontend gender ("Bride"/"Groom") → DB gender ("female"/"male") ──
+        // The DB stores gender as "male" / "female" (see user.model.js enum)
+        // Frontend "Looking for Bride" means we search for gender = "female"
+        const targetGender = gender === "Bride" ? "female" : "male";
+ 
+        //  Calculate DOB range from age (same pattern as mutualMatching) ─
+        const currentYear = new Date().getFullYear();
+        const ageWindowMin = ageNum - 5;  // search ±5 years
+        const ageWindowMax = ageNum + 5;
+        const birthYearFrom = currentYear - ageWindowMax;
+        const birthYearTo   = currentYear - ageWindowMin;
+ 
+        // uild MongoDB query 
+        const query = {
+            // Only active profiles
+            ActiveStatus: true,
+ 
+            // Opposite gender
+            gender: targetGender,
+ 
+            // Age window via DOB
+            dob: {
+                $gte: new Date(`${birthYearFrom}-01-01`),
+                $lte: new Date(`${birthYearTo}-12-31`),
+            },
+ 
+            // Height window: ±10 cm
+            height: {
+                $gte: heightNum - 10,
+                $lte: heightNum + 10,
+            },
+ 
+            // Monthly income: at or above selected minimum
+            monthlyIncome: { $gte: incomeNum },
+ 
+            // Occupation: case-insensitive match
+            occupation: { $regex: new RegExp(Occupation, "i") },
+        };
+ 
+        // Caste filter — match on subCaste (most specific field from form)
+        // caste from frontend is the full string "subCaste, caste, religion,"
+        // We parse it or accept it as an object { religion, caste, subCaste }
+        const casteObj = typeof caste === "string" ? parseCasteString(caste) : caste;
+        if (casteObj?.subCaste && casteObj.subCaste !== "ANY") {
+            query["caste.subCaste"] = { $regex: new RegExp(casteObj.subCaste, "i") };
+        }
+        if (casteObj?.caste && casteObj.caste !== "ANY") {
+            query["caste.caste"] = { $regex: new RegExp(casteObj.caste, "i") };
+        }
+        if (casteObj?.religion && casteObj.religion !== "ANY") {
+            query["caste.religion"] = { $regex: new RegExp(casteObj.religion, "i") };
+        }
+ 
+        // Education filter — skip if "ANY" or empty
+        // education field in DB: [{ degree: String, category: String }]
+        const isAnyEducation =
+            !education ||
+            (Array.isArray(education) &&
+                (education.length === 0 ||
+                    education.some(
+                        (e) => e === "ANY" || e?.degree === "ANY"
+                    )));
+ 
+        if (!isAnyEducation && Array.isArray(education)) {
+            const degreeList = education
+                .map((e) => (typeof e === "string" ? e : e?.degree))
+                .filter(Boolean);
+ 
+            if (degreeList.length > 0) {
+                query["education.degree"] = { $in: degreeList };
+            }
+        }
+ 
+        //  Fetch exactly 2 results 
+        const candidates = await userModel
+            .find(query)
+            .select(
+                "firstName midname lastName gender dob height monthlyIncome occupation " +
+                "education caste profilePic nativeCity workLocation maritalStatus"
+            )
+            .limit(2)
+            .lean();
+ 
+
+        const result = candidates.map((c) => {
+            // Calculate age from dob for display
+            const dobDate = c.dob ? new Date(c.dob) : null;
+            const displayAge = dobDate
+                ? currentYear - dobDate.getFullYear()
+                : null;
+ 
+            return {
+                _id: c._id,
+                name: [c.firstName, c.midname, c.lastName].filter(Boolean).join(" "),
+                age: displayAge,
+                gender: c.gender,
+                height: c.height,
+                monthlyIncome: c.monthlyIncome,
+                occupation: c.occupation,
+                education: c.education,
+                caste: c.caste,
+                profilePic: c.profilePic || null,
+                city: c.nativeCity?.city || null,
+                state: c.nativeCity?.state || null,
+                maritalStatus: c.maritalStatus || null,
+            };
+        });
+        // console.log(req.body)
+        return res.status(200).send({
+            status: true,
+            message: `Found ${result.length} matches`,
+            count: result.length,
+            result,
+        });
+ 
+    } catch (error) {
+        console.error("Quick Search Error:", error);
+        return res.status(500).send({
+            status: false,
+            message: "Server error",
+            error: error.message,
+        });
+    }
+};
+ 
+/**
+ * Helper: parse caste string like "Sharma, Brahmin, Hindu,"
+ * into { subCaste: "Sharma", caste: "Brahmin", religion: "Hindu" }
+ */
+function parseCasteString(str) {
+    const parts = str.split(",").map((p) => p.trim()).filter(Boolean);
+    return {
+        subCaste: parts[0] || null,
+        caste:    parts[1] || null,
+        religion: parts[2] || null,
+    };
+}
+ 

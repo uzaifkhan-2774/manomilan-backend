@@ -47,7 +47,7 @@ const userSchema = new Schema({
     parentsContact: { type: Number },
     whatsApp: { type: Number },
     alternateNumber: { type: String },
-    brothersCount: { type: Number },
+    brothersCount: { type: String },
     brothers: { type: String },
     sisters: { type: String },
     sistersExactCount: { type: Number },
