@@ -7,7 +7,7 @@ const folderPath = "C:/Users/Administrator/Downloads/manomilan-backend-main/src/
 const uploadFolder = path.join(folderPath, 'upload');
 
 if (!fs.existsSync(uploadFolder)) {
-    fs.mkdirSync(uploadFolder)
+  fs.mkdirSync(uploadFolder, { recursive: true });
 }
 
 const storage = multer.diskStorage({
