@@ -1431,21 +1431,62 @@ export const getAvailablePackages = async (req, res) => {
 export const checkUserExists = async (req, res) => {
   try {
     const { mobileNo, dob, name } = req.body;
+    console.log(mobileNo)
+    console.log(dob);
+    console.log(name)
+
     if (!mobileNo || !dob || !name) {
-      return res.send({ status: false, message: "All fields are required" })
+      return res.send({
+        status: false,
+        message: "All fields are required",
+      });
     }
-    const fname = name.split(' ')[0]
-    const mname = name.split(' ')[1]
-    const lname = name.split(' ')[2]
-    if (await userModel.findOne({ loginEmail: mobileNo, dob: new Date(dob), firstName: fname, midname: mname, lastName: lname })) {
-      return res.send({ status: true, message: "User exists" })
+
+    const nameParts = name.trim().split(" ");
+
+    const fname = nameParts[0]?.trim();
+    const mname = nameParts[1]?.trim();
+    const lname = nameParts[2]?.trim();
+
+    // Convert DOB to only date part
+    const start = new Date(dob);
+   start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(dob);
+end.setUTCHours(23, 59, 59, 999);
+
+    const user = await userModel.findOne({
+      // loginNumber: mobileNo,
+      // firstName: fname,
+      // midname: mname,
+      // lastName: lname,
+      dob: {
+        $gte: start,
+        $lte: end,
+      },
+    });
+
+    if (user) {
+      return res.send({
+        status: true,
+        message: "User exists",
+      });
     }
-    return res.send({ status: false, message: "User not found" })
+
+    return res.send({
+      status: false,
+      message: "User not found",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.send({
+      status: false,
+      message: "Server error",
+    });
   }
-  catch (error) {
-    return res.send({ status: false, message: "Server error" })
-  }
-}
+};
 
 // Quick search api
 
@@ -1489,12 +1530,12 @@ export const quickSearch = async (req, res) => {
             });
         }
  
-        //  Map frontend gender ("Bride"/"Groom") → DB gender ("female"/"male") ──
+        //  Map frontend gender ("Bride"/"Groom") → DB gender ("female"/"male")
         // The DB stores gender as "male" / "female" (see user.model.js enum)
         // Frontend "Looking for Bride" means we search for gender = "female"
         const targetGender = gender === "Bride" ? "female" : "male";
  
-        //  Calculate DOB range from age (same pattern as mutualMatching) ─
+        //  Calculate DOB range from age (same pattern as mutualMatching)
         const currentYear = new Date().getFullYear();
         const ageWindowMin = ageNum - 5;  // search ±5 years
         const ageWindowMax = ageNum + 5;
@@ -1615,7 +1656,7 @@ export const quickSearch = async (req, res) => {
 };
  
 /**
- * Helper: parse caste string like "Sharma, Brahmin, Hindu,"
+ *  parse caste string like "Sharma, Brahmin, Hindu,"
  * into { subCaste: "Sharma", caste: "Brahmin", religion: "Hindu" }
  */
 function parseCasteString(str) {

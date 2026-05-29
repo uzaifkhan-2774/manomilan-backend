@@ -579,18 +579,30 @@ export const getCurrentAdmin = async (req, res) => {
 
 export const getUsers = async (req, res) => {
     try {
-        const lowerLimit = parseInt(req.query.lowerLimit) || 0;
-        const upperLimit = parseInt(req.query.upperLimit) || 20;
-        const AllUsers = await userModel.find().skip(lowerLimit).limit(upperLimit);
-        if (AllUsers.length == 0) {
-            return res.send({ status: false, message: "No users Found." })
+
+        const AllUsers = await userModel.find();
+
+        if (AllUsers.length === 0) {
+            return res.send({
+                status: false,
+                message: "No users Found."
+            });
         }
 
-        return res.send({ status: true, users: AllUsers });
+        return res.send({
+            status: true,
+            users: AllUsers
+        });
+
     } catch (error) {
-        return res.send({ status: false, message: "Something went wrong. Internal server error" })
+        console.log(error);
+
+        return res.send({
+            status: false,
+            message: "Something went wrong. Internal server error"
+        });
     }
-}
+};
 
 export const getSingleUser = async (req, res) => {
     try {
@@ -1742,8 +1754,10 @@ export const deleteSect = async (req, res) => {
 
 // === POSITION === 
 export const addPosition = async (req, res) => {
+
     try {
         const { position } = req.body;
+        console.log(position);
         if (!position) {
             return res.send({ status: false, message: "position is required" });
         }
@@ -1753,7 +1767,7 @@ export const addPosition = async (req, res) => {
             return res.send({ status: false, message: "Position already exists" });
         }
 
-        const newData = new positionsModel({ positions: position });
+        const newData = new positionsModel({ position: position });
         await newData.save();
         return res.send({ status: true, message: "Position added successfully" });
     } catch (error) {
