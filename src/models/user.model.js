@@ -139,6 +139,7 @@ const userSchema = new Schema({
     },
     Reference: { type: String },
     ReferenceMobile: { type: String },
+    FamilyDetails: {type : String},
 
     // addresses available
     freeAddresses: {

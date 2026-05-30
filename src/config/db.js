@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import { env } from "process";
 
 dotenv.config()
 
 const connectDb = async () => {
     try {
-        await mongoose.connect(process.env.mongoUrl);
+        await mongoose.connect("mongodb+srv://mano-admin:manomilan123@mano-cluster.abcp22g.mongodb.net/manomilan-data");
         console.log("Db connected successfully...!")
         console.log(mongoose.connection.readyState)
     } catch (error) {

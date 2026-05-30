@@ -711,24 +711,16 @@ export const getOtpForUser = async (req, res) => {
 };
 
 export const verifyOtpAndChangeUserPassword = async (req, res) => {
-  const { email, otp, newPassword } = req.body; // send email , otp and newpassword
-  if (!email || !otp || !newPassword)
-    return res.send({ status: false, message: "All fields required." });
+  console.log(req.id);
+  const { newPassword } = req.body; // send email , otp and newpassword
+  if (!newPassword)
+    return res.send({ status: false, message: "new password required." });
 
-  const user = await userModel.findOne({ loginEmail: email });
-  const id = user._id;
+  const id = req.id;
+  console.log(id);
 
-  const otpEntry = await otpModel.findOne({ id }).sort({ createdAt: -1 });
-  if (!otpEntry) return res.send({ status: false, message: "OTP not found." });
-
-  const isExpired = new Date() - new Date(otpEntry.createdAt) > 10 * 60 * 1000;
-  if (isExpired) return res.send({ status: false, message: "OTP expired." });
-
-  if (parseInt(otp) !== otpEntry.otp)
-    return res.send({ status: false, message: "Incorrect OTP." });
 
   await userModel.findByIdAndUpdate(id, { password: Number(newPassword) });
-  await otpModel.deleteMany({ id });
 
   return res.send({ status: true, message: "Password updated successfully." });
 };
@@ -1431,9 +1423,9 @@ export const getAvailablePackages = async (req, res) => {
 export const checkUserExists = async (req, res) => {
   try {
     const { mobileNo, dob, name } = req.body;
-    console.log(mobileNo)
-    console.log(dob);
-    console.log(name)
+    // console.log(mobileNo)
+    // console.log(dob);
+    // console.log(name)
 
     if (!mobileNo || !dob || !name) {
       return res.send({

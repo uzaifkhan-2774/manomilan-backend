@@ -1444,7 +1444,9 @@ export const updateOfficeInformation = async (req, res) => {
       vipMember,
       Reference,
       ReferenceMobile,
+      FamilyDetails
     } = req.body;
+    // console.log(req.body);
 
     if (!userId) {
       return res.status(400).json({ message: "User ID is required" });
@@ -1465,6 +1467,7 @@ export const updateOfficeInformation = async (req, res) => {
     user.vipMember = vipMember === 'true' || vipMember === true;
     user.Reference = Reference || user.Reference;
     user.ReferenceMobile = ReferenceMobile || user.ReferenceMobile;
+    user.FamilyDetails = FamilyDetails || user.FamilyDetails;
 
     // Handle uploaded files (Multer adds req.files)
     user.userPhotoFive = req?.files?.userPhotoFive?.[0]?.filename || "";

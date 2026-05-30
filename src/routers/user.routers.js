@@ -30,7 +30,7 @@ const router = express.Router();
 router.post('/register', uploadMiddleware, registerUser);
 router.post('/login', login);
 router.post('/get-otp', getOtpForUser);
-router.post('/verify-otp-reset-password', verifyOtpAndChangeUserPassword);
+router.post('/verify-otp-reset-password', userAuth, verifyOtpAndChangeUserPassword);
 
 router.put('/editprofile', userAuth, editProfile)
 router.get('/getcurrentuser', userAuth, getLoggedInUser);
